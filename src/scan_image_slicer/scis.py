@@ -353,16 +353,19 @@ class ScanImageSlicer:
     def add_task_random_n_images(self, n):
         added = []
         ids = []
+        pool = []
 
-        if n > len(self.scanned_images):
-            log.error("Cannot add more than %s random images", len(self.scanned_images))
+        for i in range(0, len(self.scanned_images) - 1):
+            pool.append(i)
+
+        if n > len(self.scanned_images) - 1:
+            log.error("Cannot add more than %s random images", len(self.scanned_images) - 1)
             sys.exit()
 
         while len(ids) != n:
-            pick = random.randint(0, len(self.scanned_images) - 1)
-
-            if not pick in ids:
-                ids.append(pick)
+            pick = random.choice(pool)
+            pool.remove(pick)
+            ids.append(pick)
 
         for id in ids:
             if id in self.tasks:
