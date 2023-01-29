@@ -28,9 +28,6 @@ classifiers = [
     "Topic :: Multimedia :: Graphics :: Capture :: Scanners",
 ]
 
-# [tool.flit.module]
-# name = "scan_image_slicer"
-
 [project.scripts]
 scan-image-slicer = "scan_image_slicer.scan_image_slicer:main"
 
