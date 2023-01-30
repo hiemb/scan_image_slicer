@@ -108,14 +108,17 @@ def conf_parser():
 
     io_group = parser.add_argument_group("settings|file format")
 
-    io_group.add_argument("-save", "--save-format", metavar="JPEG|PNG",
+    io_group.add_argument("-save", "--save-format", metavar="JPEG|PNG|WEBP",
                         type=str, help="the file format of the sliced image")
                         
     io_group.add_argument("-png", "--png-compression", metavar="0..9",
                         type=int, help="PNG compression level")
-                        
+
     io_group.add_argument("-jpeg", "--jpeg-quality", metavar="0..100",
                         type=int, help="JPEG quality level")
+
+    io_group.add_argument("-webp", "--webp-quality", metavar="1..101",
+                        type=int, help="WEBP quality level")
  
     list_group = parser.add_argument_group("commands|lists")
 
@@ -242,10 +245,10 @@ def conf_parser():
     else:
         settings["filter_gamma"] = 1.0
 
-    if args.save_format in ["JPEG", "PNG"]:
+    if args.save_format in ["JPEG", "PNG", "WEBP"]:
         settings["save_format"] = args.save_format
     else:
-        errors.append("Save format should be either JPEG or PNG")
+        errors.append("Save format should be one of JPEG, PNG or WEBP")
 
     if args.png_compression in range(0, 10):
         settings["png_compression"] = args.png_compression
@@ -256,6 +259,11 @@ def conf_parser():
         settings["jpeg_quality"] = args.jpeg_quality
     else:
         errors.append("Value of jpeg_quality should be between 0 and 100")
+
+    if args.webp_quality in range(1, 102):
+        settings["webp_quality"] = args.webp_quality
+    else:
+        errors.append("Value of webp_quality should be between 1 and 101")
 
     commands = {}
 

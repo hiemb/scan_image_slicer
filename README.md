@@ -100,15 +100,16 @@ Only one mode can be used at a time.
     Add gamma correction to the sliced image with values above 1.0.
 
 ### File format
-- `-save JPEG|PNG`, `--save-format JPEG|PNG` _(default is PNG)_
-
-    The savefile format of the sliced image.
-
+- `-save JPEG|PNG|WEBP`, `--save-format JPEG|PNG|WEBP` _(default is PNG)_
 - `-png 0..9`, `--png-compression 0..9` _(default is 3)_
 
     Note: higher compression levels take more time per sliced image.
 
-- `-jpeg`, `--jpeg-quality` _(default is 95)_
+- `-jpeg 0..100`, `--jpeg-quality 0..100` _(default is 95)_
+
+- `-webp 1..101`, `--webp-quality 1..101` _(default is 90)_
+
+    Note: quality level of 101 is lossless.
 
 ### List information
 - `-listS`, `--list-scans` list scanned images name and ID

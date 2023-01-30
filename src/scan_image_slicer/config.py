@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 config_raw = r'''# NOTE: on windows backslash needs to be escaped like so:
-# c:\\my path\\to\\input
+# C:\\my path\\to\\input
 
 # Place your scanned images here
 input: "/path/to/input/"
@@ -51,11 +51,16 @@ filter-contrast: 1.0
 # Add gamma correction (values over 1.0)
 filter-gamma: 1.0
 
-# Save format (JPEG or PNG)
+# Save format (PNG|JPEG|WEBP)
 save-format: "PNG"
 
 # Level of PNG compression (0-9)
 png-compression: 3
 
 # Level of JPEG quality (0-100)
-jpeg-quality: 95'''
+jpeg-quality: 95
+
+# Level of WEBP quality (1-101)
+# 101 = lossless
+webp-quality: 90
+'''

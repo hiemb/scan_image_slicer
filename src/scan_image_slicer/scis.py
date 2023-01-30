@@ -173,12 +173,13 @@ class ScanImageSlicer:
     
                         if self.settings["save_format"] == "PNG":
                             file_name += ".png"
-                            output = os.path.join(scanned_image[2], file_name)
                             params = [int(cv.IMWRITE_PNG_COMPRESSION), self.settings["png_compression"]]
-                        else:
+                        elif self.settings["save_format"] == "JPEG":
                             file_name += ".jpg"
-                            output = os.path.join(scanned_image[2], file_name)
                             params = [int(cv.IMWRITE_JPEG_QUALITY), self.settings["jpeg_quality"]]
+                        elif self.settings["save_format"] == "WEBP":
+                            file_name += ".webp"
+                            params = [int(cv.IMWRITE_WEBP_QUALITY), self.settings["webp_quality"]]
 
                         outfile = os.path.normpath(os.path.join(dest_path, file_name))
                         
