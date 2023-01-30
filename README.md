@@ -18,6 +18,7 @@ pip install scan-image-slicer
 
 ### Requirements with pip install
 - Python 3.6+
+- pip
 
 Using the tool
 ---
