@@ -10,8 +10,12 @@ def conf_parser():
 
     if sys.platform in ["win32", "cygwin"]:
         path_config = os.path.join(os.path.expanduser("~"), "Documents", "ScanImageSlicer")
-    else:
+    elif sys.platform == "darwin":
+        path_config = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "ScanImageSlicer")
+    elif sys.platform == "linux":
         path_config = os.path.join(os.path.expanduser("~"), ".config", "ScanImageSlicer")
+    else:
+        path_config = os.path.join(os.path.expanduser("~"), ".ScanImageSlicer")
         
     if not os.path.exists(path_config):
         os.mkdir(path_config)
