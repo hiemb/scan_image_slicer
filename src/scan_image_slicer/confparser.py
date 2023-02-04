@@ -328,4 +328,4 @@ def conf_parser():
             log.error(error)
         sys.exit()
 
-    return [settings, commands]
+    return [settings, commands, path_config]

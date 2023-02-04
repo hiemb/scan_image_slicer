@@ -18,11 +18,11 @@ def main():
     log.basicConfig(format=lname + '%(message)s', level=LOG_LEVEL, handlers=[log.StreamHandler(sys.stdout)])
     log.info("%s", PROGRAM_NAME)
 
-    parsed_dicts = conf_parser()
-    settings = parsed_dicts[0]
-    commands = parsed_dicts[1]
+    conf = conf_parser()
+    settings = conf[0]
+    commands = conf[1]
 
-    scis = ScanImageSlicer(settings)
+    scis = ScanImageSlicer(settings, conf[2])
 
     if commands["list_scans"]:
         scis.list_scanned_images()

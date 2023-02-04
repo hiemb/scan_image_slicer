@@ -29,6 +29,8 @@ The easiest way to use the tool is to first edit the default config file and the
 - **you need to run the tool once for the default config file to be created**
 - location on Windows: Documents -> ScanImageSlicer -> config.yaml
 - location on Linux: ~/.config/ScanImageSlicer/config.yaml
+- location on MacOS: ~/Library/Application Support/ScanImageSlicer/config.yaml
+- location on Other: ~/.ScanImageSlicer/config.yaml
 ### Help
 - `-h`, `--help` Display help
 

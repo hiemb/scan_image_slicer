@@ -6,7 +6,7 @@ build-backend = "flit_core.buildapi"
 name = "scan-image-slicer"
 authors = [{name = "hiemb", email = "highonember@gmail.com"}]
 description = "Scan Image Slicer: Detect and slice images from a scanned image"
-version = "1.1.3"
+version = "1.1.4"
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.6"
@@ -33,3 +33,4 @@ scan-image-slicer = "scan_image_slicer.scan_image_slicer:main"
 
 [project.urls]
 Home = "https://github.com/hiemb/scan_image_slicer"
+Source = "https://github.com/hiemb/scan_image_slicer"

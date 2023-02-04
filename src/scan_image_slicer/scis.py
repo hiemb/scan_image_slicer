@@ -14,8 +14,9 @@ from time import strftime, localtime, time_ns, gmtime
 from .filters import denoise, bcg, show_images
 
 class ScanImageSlicer:
-    def __init__(self, settings):
+    def __init__(self, settings, path_config):
         self.settings = settings
+        self.path_config = path_config
         self.scanned_images = self.collect_scanned_images()
         self.tasks = []
         self.cmds = []
@@ -394,10 +395,7 @@ class ScanImageSlicer:
         dots = self.dots
         lines = []
 
-        if sys.platform in ["win32", "cygwin"]:
-            filepath = os.path.join(os.path.expanduser("~"), ".ScanImageSlicer", "list of scanned images.txt")
-        else:
-            filepath = os.path.join(os.path.expanduser("~"), ".config", "ScanImageSlicer", "list of scanned images.txt")
+        filepath = os.path.join(self.path_config, "list of scanned images.txt")
 
         for i in range(len(self.scanned_images)):
             if i in [10, 100, 1000, 10000, 100000, 1000000]:
