@@ -162,27 +162,29 @@ def conf_parser():
 
     settings = {}
     errors = []
+    inpath = os.path.normpath(os.path.expanduser(args.input))
+    outpath = os.path.normpath(os.path.expanduser(args.output))
     
     if args.skip_confirm:
         settings["skip_confirm"] = True
     else:
         settings["skip_confirm"] = False
 
-    if os.path.exists(args.input):
-        if args.input == "":
+    if os.path.exists(inpath) and not os.path.isfile(inpath):
+        if inpath == "":
             errors.append("Use a valid input path")
         else:
-            settings["input"] = os.path.normpath(args.input)
+            settings["input"] = inpath
     else:
-        errors.append(f"Input path does not exist: {args.input}")
+        errors.append(f"Input folder does not exist: {inpath}")
 
-    if os.path.exists(args.output):
-        if args.output == "":
+    if os.path.exists(outpath) and not os.path.isfile(outpath):
+        if outpath == "":
             errors.append("Use a valid output path")
         else:
-            settings["output"] = os.path.normpath(args.output)
+            settings["output"] = outpath
     else:
-        errors.append(f"Output path does not exist: {args.output}")
+        errors.append(f"Output folder does not exist: {outpath}")
 
     if args.white_threshold in range(0, 256):
         settings["white_threshold"] = args.white_threshold
