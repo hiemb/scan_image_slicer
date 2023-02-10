@@ -4,14 +4,15 @@ import os
 import sys
 import logging as log
 import cv2 as cv
+import numpy as np
 import imutils as im
 import random
 
 from operator import itemgetter
-# from imutils import perspective
 from tqdm.auto import tqdm
 from time import strftime, localtime, time_ns, gmtime
 from .filters import denoise, bcg, show_images
+from .imutils.perspective import four_point_transform
 
 class ScanImageSlicer:
     def __init__(self, settings, path_config):
@@ -95,6 +96,7 @@ class ScanImageSlicer:
 
         elif self.settings["slice_mode"] or self.settings["preview_mode"]:
             for contour in contours:
+                p_fix = self.settings["perspective_fix"]
                 contour_area_pct = (100 / image_area_px * cv.contourArea(contour)) * 100
 
                 if contour_area_pct > self.settings["minimum_size"]:
@@ -103,10 +105,24 @@ class ScanImageSlicer:
                     contour[:,:,0] = contour[:,:,0] * x_fac
                     contour[:,:,1] = contour[:,:,1] * y_fac
 
-                    x, y, w, h = cv.boundingRect(contour)
+                    need_p_fix = False
 
-                    mat_save = mat_source[y:min(y + h, mat_source.shape[0]),
-                                          x:min(x + w, mat_source.shape[1])]
+                    if p_fix != 0:
+                        persp_rect = cv.minAreaRect(contour)
+                        tilt_angle = round(persp_rect[2])
+
+                        if tilt_angle in range(p_fix, 90 - p_fix):
+                            need_p_fix = True
+
+                    if need_p_fix:
+                        points = np.int0(cv.boxPoints(persp_rect))
+                        clear_color = self.settings["white_threshold"]
+                        bvalue = (clear_color, clear_color, clear_color)
+                        mat_save = four_point_transform(mat_source, points, bvalue)
+                    else:
+                        x, y, w, h = cv.boundingRect(contour)
+                        mat_save = mat_source[y:min(y + h, mat_source.shape[0]),
+                                              x:min(x + w, mat_source.shape[1])]
 
                     scaled = False
 

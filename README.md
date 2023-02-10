@@ -84,7 +84,7 @@ Only one mode can be used at a time.
 
     Only one method of scaling can be used at a time. All methods preserve the aspect ratio. A value of zero means the option is disabled.
 
-### Filters
+### Filters & fixes
 - `-filtD 0..5`, `--filter-denoise 0..5` _(default is 1)_
 
     Remove scanner noise from the sliced image. Higher values take more time. A value of zero means the option is disabled.
@@ -100,6 +100,10 @@ Only one mode can be used at a time.
 - `-filtG N > 1.0`, `--filter-gamma N > 1.0` _(default is 1.0)_
 
     Add gamma correction to the sliced image with values above 1.0.
+
+- `-pfix 0..89`, `--perspective-fix 0..89` _(default is 0)_
+
+    Add perspective correction to the sliced image. The given value is the maximum allowed 'tilt' of the sliced image in degrees. A value of zero means the option is disabled.
 
 ### File format
 - `-save JPEG|PNG|WEBP`, `--save-format JPEG|PNG|WEBP` _(default is PNG)_

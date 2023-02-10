@@ -96,7 +96,7 @@ def conf_parser():
     scale_group.add_argument("-scaleH", "--scale-height", metavar="N",
                         type=int, help="scale sliced image using a new height value")
 
-    filter_group = parser.add_argument_group("settings|filters")
+    filter_group = parser.add_argument_group("settings|filters&fixes")
 
     filter_group.add_argument("-filtD", "--filter-denoise", metavar="0..5",
                         type=int, help="remove scanner noise from the sliced image")
@@ -109,6 +109,9 @@ def conf_parser():
 
     filter_group.add_argument("-filtG", "--filter-gamma", metavar="N > 1.0",
                         type=float, help="add gamma correction to the sliced image")
+
+    filter_group.add_argument("-pfix", "--perspective-fix", metavar="0..89",
+                        type=int, help="add perspective fix to the sliced image")
 
     io_group = parser.add_argument_group("settings|file format")
 
@@ -250,6 +253,11 @@ def conf_parser():
         settings["filter_gamma"] = args.filter_gamma
     else:
         settings["filter_gamma"] = 1.0
+    
+    if args.perspective_fix in range(0, 90):
+        settings["perspective_fix"] = args.perspective_fix
+    else:
+        errors.append("Value of perspective_fix should be between 0 and 89")
 
     if args.save_format in ["JPEG", "PNG", "WEBP"]:
         settings["save_format"] = args.save_format
