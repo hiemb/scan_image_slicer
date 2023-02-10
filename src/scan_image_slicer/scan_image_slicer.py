@@ -6,7 +6,7 @@ import logging as log
 from .scis import ScanImageSlicer
 from .confparser import conf_parser
 
-LOG_LEVEL = log.DEBUG
+LOG_LEVEL = log.INFO
 PROGRAM_NAME = "Scan Image Slicer"
 
 def main():
