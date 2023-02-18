@@ -76,4 +76,10 @@ jpeg-quality: 95
 # Level of WEBP quality (1-101)
 # 101 = lossless
 webp-quality: 90
+
+# Show infobar (True/False)
+show-infobar: False
+
+# Infobar font scale
+font-scale: 1.0
 '''

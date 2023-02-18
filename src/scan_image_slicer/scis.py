@@ -15,8 +15,9 @@ from .filters import denoise, bcg, show_images
 from .imutils.perspective import four_point_transform
 
 class ScanImageSlicer:
-    def __init__(self, settings, path_config):
+    def __init__(self, settings, path_config, infobar):
         self.settings = settings
+        self.infobar = infobar
         self.path_config = path_config
         self.scanned_images = self.collect_scanned_images()
         self.tasks = []
@@ -88,10 +89,11 @@ class ScanImageSlicer:
                     image_count,
                     false_image_count)
 
-            if show_images(scanned_image[0],
-                                list([mat_res]),
-                                self.settings["view_height"],
-                                False) == "exit":
+            if show_images(
+                scanned_image[0],
+                list([mat_res]),
+                self.settings["view_height"]
+                ) == "exit":
                 sys.exit()
 
         elif self.settings["slice_mode"] or self.settings["preview_mode"]:
@@ -150,12 +152,53 @@ class ScanImageSlicer:
                                                  self.settings["filter_contrast"],
                                                  self.settings["filter_gamma"])
 
+                    # Figure out the filename before previewing the image.
+
+                    file_name = ""
+                    file_name_divider = "-"
+                    inpath = self.settings["input"]
+                    outpath = self.settings["output"]
+                    abs_path = scanned_image[1]
+                    dest_path = scanned_image[2]
+                    rel_path = scanned_image[3]
+
+                    if rel_path == ".":
+                        file_name += os.path.split(inpath)[1] + file_name_divider
+                    else:
+                        parts = rel_path.split(os.sep)
+
+                        for part in parts:
+                            file_name += part + file_name_divider
+
+                    if file_name in self.output_counter.keys():
+                        self.output_counter[file_name] += 1
+                    else:
+                        self.output_counter[file_name] = 1
+
+                    file_name += str(self.output_counter[file_name])
+
+                    if self.settings["save_format"] == "PNG":
+                        file_name += ".png"
+                        params = [int(cv.IMWRITE_PNG_COMPRESSION), self.settings["png_compression"]]
+                    elif self.settings["save_format"] == "JPEG":
+                        file_name += ".jpg"
+                        params = [int(cv.IMWRITE_JPEG_QUALITY), self.settings["jpeg_quality"]]
+                    elif self.settings["save_format"] == "WEBP":
+                        file_name += ".webp"
+                        params = [int(cv.IMWRITE_WEBP_QUALITY), self.settings["webp_quality"]]
+
+                    outfile = os.path.normpath(os.path.join(dest_path, file_name))
+
                     action = ""
                     if self.settings["preview_mode"]:
-                            action = show_images("|S to save|F to toggle filters",
-                                                  list([mat_save, mat_filt]),
-                                                  self.settings["view_height"],
-                                                  True)
+                        action = show_images(
+                            "|S to save|F to toggle filters",
+                            list([mat_save, mat_filt]),
+                            self.settings["view_height"],
+                            True,
+                            file_name,
+                            self.infobar
+                            )
 
                     if action == "exit":
                         sys.exit()
@@ -165,41 +208,6 @@ class ScanImageSlicer:
                         if not os.path.exists(scanned_image[2]):
                             os.makedirs(scanned_image[2])
 
-                        file_name = ""
-                        file_name_divider = "-"
-                        inpath = self.settings["input"]
-                        outpath = self.settings["output"]
-                        abs_path = scanned_image[1]
-                        dest_path = scanned_image[2]
-                        rel_path = scanned_image[3]
-
-                        if rel_path == ".":
-                            file_name += os.path.split(inpath)[1] + file_name_divider
-                        else:
-                            parts = rel_path.split(os.sep)
-                            
-                            for part in parts:
-                                file_name += part + file_name_divider
-
-                        if file_name in self.output_counter.keys():
-                            self.output_counter[file_name] += 1
-                        else:
-                            self.output_counter[file_name] = 1
-
-                        file_name += str(self.output_counter[file_name])
-    
-                        if self.settings["save_format"] == "PNG":
-                            file_name += ".png"
-                            params = [int(cv.IMWRITE_PNG_COMPRESSION), self.settings["png_compression"]]
-                        elif self.settings["save_format"] == "JPEG":
-                            file_name += ".jpg"
-                            params = [int(cv.IMWRITE_JPEG_QUALITY), self.settings["jpeg_quality"]]
-                        elif self.settings["save_format"] == "WEBP":
-                            file_name += ".webp"
-                            params = [int(cv.IMWRITE_WEBP_QUALITY), self.settings["webp_quality"]]
-
-                        outfile = os.path.normpath(os.path.join(dest_path, file_name))
-                        
                         cv.imwrite(outfile, mat_filt, params)
                         image_count += 1
 
@@ -225,7 +233,7 @@ class ScanImageSlicer:
 
         if not skip_confirm:
             log.info("Continue? y/n")
-            
+
             while True:
                 try:
                     answer = input(":: Answer: ").lower()
@@ -294,7 +302,7 @@ class ScanImageSlicer:
                 log.info(cmd)
         else:
             log.info("Command list is empty")
-        
+
     def remove_task_with_image_id(self, ids):
         removed = []
 
@@ -323,7 +331,7 @@ class ScanImageSlicer:
             else:
                 self.tasks.append(id)
                 added.append(id)
-            
+
         if added:
             self.cmds.append(f"[+] Added image with ID {added} to the task list")
 
@@ -451,7 +459,7 @@ class ScanImageSlicer:
             ".hdr",
             ".pic"
         ]
-        
+
         inpath = self.settings["input"]
         outpath = self.settings["output"]
 

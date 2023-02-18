@@ -22,7 +22,7 @@ def main():
     settings = conf[0]
     commands = conf[1]
 
-    scis = ScanImageSlicer(settings, conf[2])
+    scis = ScanImageSlicer(settings, conf[2], conf[3])
 
     if commands["list_scans"]:
         scis.list_scanned_images()

@@ -138,3 +138,7 @@ Only one mode can be used at a time.
 - `-addR N`, `--add-random N` add N amount of random scanned images
 
 - `-remID [ID ...]`, `--remove-id [ID ...]` remove scanned images using IDs eg. 1 2 3
+
+### Infobar
+- `-info`, `--show-infobar` show infobar on preview mode
+- `-fontS N`, `--font-scale N` infobar font scale _(default is 1.0)_

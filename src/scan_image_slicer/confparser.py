@@ -16,7 +16,7 @@ def conf_parser():
         path_config = os.path.join(os.path.expanduser("~"), ".config", "ScanImageSlicer")
     else:
         path_config = os.path.join(os.path.expanduser("~"), ".ScanImageSlicer")
-        
+
     if not os.path.exists(path_config):
         os.mkdir(path_config)
 
@@ -48,118 +48,92 @@ def conf_parser():
         formatter_class=configargparse.RawTextHelpFormatter,
         allow_abbrev=False)
 
-    parser.add_argument("-c", "--config_file", metavar="FILE",
-                        is_config_file=True, help="path to custom config file")
+    parser.add_argument("-c", "--config_file", metavar="FILE", is_config_file=True, help="path to custom config file")
 
-    parser.add_argument("-skip", "--skip-confirm", action="store_true",
-                        help="skip the confirm start question")
+    parser.add_argument("-skip", "--skip-confirm", action="store_true", help="skip the confirm start question")
 
     mode_group = parser.add_argument_group("settings|modes")
     mode_select_group = mode_group.add_mutually_exclusive_group()
 
-    mode_select_group.add_argument("-test", "--test-mode", action="store_true",
-                        help="enable test mode")
+    mode_select_group.add_argument("-test", "--test-mode", action="store_true", help="enable test mode")
 
-    mode_select_group.add_argument("-pre", "--preview-mode", action="store_true",
-                        help="enable preview mode")
+    mode_select_group.add_argument("-pre", "--preview-mode", action="store_true", help="enable preview mode")
 
-    mode_select_group.add_argument("-slice", "--slice-mode", action="store_true",
-                        help="enable slice mode")
+    mode_select_group.add_argument("-slice", "--slice-mode", action="store_true", help="enable slice mode")
 
     path_group = parser.add_argument_group("settings|paths")
 
-    path_group.add_argument("-i", "--input", metavar="PATH",
-                        type=str, help="input folder for the scanned images")
+    path_group.add_argument("-i", "--input", metavar="PATH", type=str, help="input folder for the scanned images")
 
-    path_group.add_argument("-o", "--output", metavar="PATH",
-                        type=str, help="output folder for the sliced images")
+    path_group.add_argument("-o", "--output", metavar="PATH", type=str, help="output folder for the sliced images")
 
     detect_group = parser.add_argument_group("settings|image detection")
 
-    detect_group.add_argument("-white", "--white-threshold", metavar="0..255",
-                        type=int, help="a value used for image detection")
-                        
-    detect_group.add_argument("-min", "--minimum-size", metavar="0..100",
-                        type=int, help="a value used for discarding too small (false) images")
+    detect_group.add_argument("-white", "--white-threshold", metavar="0..255", type=int, help="a value used for image detection")
 
-    detect_group.add_argument("-view", "--view-height", metavar="N",
-                        type=int, help="the height of the image inside the image viewer")
+    detect_group.add_argument("-min", "--minimum-size", metavar="0..100", type=int, help="a value used for discarding too small (false) images")
+
+    detect_group.add_argument("-view", "--view-height", metavar="N", type=int, help="the height of the image inside the image viewer")
 
     scale_group = parser.add_argument_group("settings|scaling")
 
-    scale_group.add_argument("-scaleF", "--scale-factor", metavar="F",
-                        type=float, help="scale sliced image using a scale factor value")
-                        
-    scale_group.add_argument("-scaleW", "--scale-width", metavar="N",
-                        type=int, help="scale sliced image using a new width value")
-                        
-    scale_group.add_argument("-scaleH", "--scale-height", metavar="N",
-                        type=int, help="scale sliced image using a new height value")
+    scale_group.add_argument("-scaleF", "--scale-factor", metavar="F", type=float, help="scale sliced image using a scale factor value")
 
-    filter_group = parser.add_argument_group("settings|filters&fixes")
+    scale_group.add_argument("-scaleW", "--scale-width", metavar="N", type=int, help="scale sliced image using a new width value")
 
-    filter_group.add_argument("-filtD", "--filter-denoise", metavar="0..5",
-                        type=int, help="remove scanner noise from the sliced image")
+    scale_group.add_argument("-scaleH", "--scale-height", metavar="N", type=int, help="scale sliced image using a new height value")
 
-    filter_group.add_argument("-filtB", "--filter-brightness", metavar="N > 1.0",
-                        type=float, help="add brightness to the sliced image")
+    filter_group = parser.add_argument_group("settings|filters & fixes")
 
-    filter_group.add_argument("-filtC", "--filter-contrast", metavar="N > 1.0",
-                        type=float, help="add contrast to the sliced image")
+    filter_group.add_argument("-filtD", "--filter-denoise", metavar="0..5", type=int, help="remove scanner noise from the sliced image")
 
-    filter_group.add_argument("-filtG", "--filter-gamma", metavar="N > 1.0",
-                        type=float, help="add gamma correction to the sliced image")
+    filter_group.add_argument("-filtB", "--filter-brightness", metavar="N > 1.0", type=float, help="add brightness to the sliced image")
 
-    filter_group.add_argument("-pfix", "--perspective-fix", metavar="0..89",
-                        type=int, help="add perspective fix to the sliced image")
+    filter_group.add_argument("-filtC", "--filter-contrast", metavar="N > 1.0", type=float, help="add contrast to the sliced image")
+
+    filter_group.add_argument("-filtG", "--filter-gamma", metavar="N > 1.0", type=float, help="add gamma correction to the sliced image")
+
+    filter_group.add_argument("-pfix", "--perspective-fix", metavar="0..89", type=int, help="add perspective fix to the sliced image")
 
     io_group = parser.add_argument_group("settings|file format")
 
-    io_group.add_argument("-save", "--save-format", metavar="JPEG|PNG|WEBP",
-                        type=str, help="the file format of the sliced image")
-                        
-    io_group.add_argument("-png", "--png-compression", metavar="0..9",
-                        type=int, help="PNG compression level")
+    io_group.add_argument("-save", "--save-format", metavar="JPEG|PNG|WEBP", type=str, help="the file format of the sliced image")
 
-    io_group.add_argument("-jpeg", "--jpeg-quality", metavar="0..100",
-                        type=int, help="JPEG quality level")
+    io_group.add_argument("-png", "--png-compression", metavar="0..9", type=int, help="PNG compression level")
 
-    io_group.add_argument("-webp", "--webp-quality", metavar="1..101",
-                        type=int, help="WEBP quality level")
- 
+    io_group.add_argument("-jpeg", "--jpeg-quality", metavar="0..100", type=int, help="JPEG quality level")
+
+    io_group.add_argument("-webp", "--webp-quality", metavar="1..101", type=int, help="WEBP quality level")
+
     list_group = parser.add_argument_group("commands|lists")
 
-    list_group.add_argument("-listS", "--list-scans", action="store_true",
-                        default=False, help="list scanned images name and ID")
+    list_group.add_argument("-listS", "--list-scans", action="store_true", default=False, help="list scanned images name and ID")
 
-    list_group.add_argument("-listF", "--list-file", action="store_true",
-                        default=False, help="save scanned images name and ID as a text file")
+    list_group.add_argument("-listF", "--list-file", action="store_true", default=False, help="save scanned images name and ID as a text file")
 
-    list_group.add_argument("-listT", "--list-tasks", action="store_true",
-                        default=False, help="list added tasks")
+    list_group.add_argument("-listT", "--list-tasks", action="store_true", default=False, help="list added tasks")
 
-    list_group.add_argument("-listC", "--list-cmds", action="store_true",
-                        default=False, help="list given commands")
+    list_group.add_argument("-listC", "--list-cmds", action="store_true", default=False, help="list given commands")
 
     task_group = parser.add_argument_group("commands|tasks")
 
-    task_group.add_argument("-addA", "--add-all", action="store_true",
-                        default=False, help="add all scanned images")
+    task_group.add_argument("-addA", "--add-all", action="store_true", default=False, help="add all scanned images")
 
-    task_group.add_argument("-addID", "--add-id", nargs="+",
-                        metavar="ID", type=int, help="add scanned images using IDs eg. 1 2 3")
+    task_group.add_argument("-addID", "--add-id", nargs="+", metavar="ID", type=int, help="add scanned images using IDs eg. 1 2 3")
 
-    task_group.add_argument("-addN", "--add-new", metavar="N", 
-                        type=int, help="add N amount of newest scanned images by creation time (ctime)")
+    task_group.add_argument("-addN", "--add-new", metavar="N", type=int, help="add N amount of newest scanned images by creation time (ctime)")
 
-    task_group.add_argument("-addO", "--add-old", metavar="N", 
-                        type=int, help="add N amount of oldest scanned images by creation time (ctime)")
+    task_group.add_argument("-addO", "--add-old", metavar="N", type=int, help="add N amount of oldest scanned images by creation time (ctime)")
 
-    task_group.add_argument("-addR", "--add-random", metavar="N", 
-                        type=int, help="add N amount of random scanned images")
+    task_group.add_argument("-addR", "--add-random", metavar="N", type=int, help="add N amount of random scanned images")
 
-    task_group.add_argument("-remID", "--remove-id", nargs="+",
-                        metavar="ID", type=int, help="remove scanned images using IDs eg. 1 2 3")
+    task_group.add_argument("-remID", "--remove-id", nargs="+", metavar="ID", type=int, help="remove scanned images using IDs eg. 1 2 3")
+
+    infobar_group = parser.add_argument_group("infobar")
+
+    infobar_group.add_argument("-info", "--show-infobar", action="store_true", help="show the infobar")
+
+    infobar_group.add_argument("-fontS", "--font-scale", metavar="N", type=float, help="change infobar font scale")
 
     args = parser.parse_args()
 
@@ -167,7 +141,7 @@ def conf_parser():
     errors = []
     inpath = os.path.normpath(os.path.expanduser(args.input))
     outpath = os.path.normpath(os.path.expanduser(args.output))
-    
+
     if args.skip_confirm:
         settings["skip_confirm"] = True
     else:
@@ -253,7 +227,7 @@ def conf_parser():
         settings["filter_gamma"] = args.filter_gamma
     else:
         settings["filter_gamma"] = 1.0
-    
+
     if args.perspective_fix in range(0, 90):
         settings["perspective_fix"] = args.perspective_fix
     else:
@@ -278,6 +252,18 @@ def conf_parser():
         settings["webp_quality"] = args.webp_quality
     else:
         errors.append("Value of webp_quality should be between 1 and 101")
+
+    infobar = {}
+
+    if args.font_scale != 1.0:
+        infobar["font_scale"] = args.font_scale
+    else:
+        infobar["font_scale"] = 1.0
+
+    if args.show_infobar:
+        infobar["show_infobar"] = True
+    else:
+        infobar["show_infobar"] = False
 
     commands = {}
 
@@ -338,4 +324,4 @@ def conf_parser():
             log.error(error)
         sys.exit()
 
-    return [settings, commands, path_config]
+    return [settings, commands, path_config, infobar]
