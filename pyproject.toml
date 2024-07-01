@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "scan-image-slicer"
-authors = [{name = "EMB", email = "eatmyboomstick@gmail.com"}]
+authors = [{name = "hiemb", email = "highonember@gmail.com"}]
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.8"
@@ -39,5 +39,5 @@ classifiers = [
 scan-image-slicer = "scan_image_slicer.scan_image_slicer:main"
 
 [project.urls]
-Home = "https://github.com/eatmyboomstick/scan_image_slicer"
-Source = "https://github.com/eatmyboomstick/scan_image_slicer"
+Home = "https://github.com/hiemb/scan_image_slicer"
+Source = "https://github.com/hiemb/scan_image_slicer"
