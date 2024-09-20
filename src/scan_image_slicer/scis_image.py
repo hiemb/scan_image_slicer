@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
 import os
-
 from .utils import *
+from .scis_logger import queue_configurer
 
-# Class for our scanned image object
 class ScanImageSlicerImage:
     def __init__(self, id, path, name, format, mtime, size):
         self.id = id
@@ -19,26 +18,36 @@ class ScanImageSlicerImage:
         self.false_slice_count = 0
 
     # Count slices inside scanned image
-    def count_slices(self, p):
+    def count_slices(self, queue, p):
+        logger = queue_configurer(queue)
+        img = pil_open_image(self.filepath)
 
-        # Load image 
-        img = pil_to_cv(pil_open_image(self.filepath))
+        if not img:
+            return 0
+
+        img = pil_to_cv(img)
         img_resized = cv_resize(img, w=min(900, img.shape[1]))
 
-        # Loop contours and count slices
         for cnt in cv_detect_slices(cv_apply_wt(img_resized, p.white_threshold)):
-
-            # Make sure the area is between min/max
             if cv_is_cnt_in_range(img_resized, cnt, p.minimum_size, p.maximum_size):
                 self.slice_count += 1
+
+        # Output warning if no images found
+        if not self.slice_count:
+            logger.warning(f"[ID:{self.id}] - ({self.name}) - No images found, skipping it..")
+            return 0
 
         return self.slice_count
 
     # Slice images and save them to the output folder
-    def save_slices(self, p):
+    def save_slices(self, queue, p):
+        logger = queue_configurer(queue)
+        img = pil_open_image(self.filepath)
 
-        # Load image
-        img = pil_to_cv(pil_open_image(self.filepath))
+        if not img:
+            return 0
+
+        img = pil_to_cv(img)
         img_resized = cv_resize(img, w=min(900, img.shape[1]))
 
         # Define file format settings
@@ -79,53 +88,57 @@ class ScanImageSlicerImage:
 
         # Make sure path was created
         if not os.path.exists(save_path):
-            log.error(f"Could not create directory: {save_path}")
-            sys.exit()
+            logger.error(f"Could not create directory: {save_path}")
+            return 0
 
         # Loop through cnts and save slices
         for cnt in cv_detect_slices(cv_apply_wt(img_resized, p.white_threshold)):
 
-            # Make sure the area is larger than minimum area size
+            # Make sure the area is between min/max sizes
             if cv_is_cnt_in_range(img_resized, cnt, p.minimum_size, p.maximum_size):
 
                 # Slice the image
-                slice = cv_slice_img(img, img_resized, cnt, p.perspective_fix)
+                sliced_img = cv_slice_img(img, img_resized, cnt, p.perspective_fix)
 
                 # Resize the slice
                 if p.scale_factor:
-                    slice = cv_resize(slice, scale=p.scale_factor)
+                    sliced_img = cv_resize(sliced_img, scale=p.scale_factor)
 
                 if p.scale_width:
-                    slice = cv_resize(slice, w=p.scale_width)
+                    sliced_img = cv_resize(sliced_img, w=p.scale_width)
 
                 if p.scale_height:
-                    slice = cv_resize(slice, h=p.scale_height)
+                    sliced_img = cv_resize(sliced_img, h=p.scale_height)
 
                 # Auto-rotate the slice
                 if p.auto_rotate in ["cw", "ccw"]:
-                    slice = cv_auto_rotate(slice, p.auto_rotate)
+                    sliced_img = cv_auto_rotate(sliced_img, p.auto_rotate)
 
                 # Apply filters to slice
-                slice = pil_filter_image(slice, filters)
+                sliced_img = pil_filter_image(sliced_img, filters)
 
                 # Define temporary filename
                 filename = "tmp_file_" + random_string(self.name, str(self.size), str(self.slice_count)) + savefile_suffix
 
                 # Save the slice (make sure it does not exist)
                 if not os.path.isfile(os.path.join(save_path, filename)):
-                    slice.save(os.path.join(save_path, filename), **file_params)
+                    sliced_img.save(os.path.join(save_path, filename), **file_params)
                 else:
-                    log.error(f"File already exists: {filename}")
-                    sys.exit()
+                    logger.error(f"File already exists: {filename}")
+                    return 0
 
                 # Up the counter
                 self.slice_count += 1
+
+        # Output warning if no images found
+        if not self.slice_count:
+            logger.warning(f"[ID:{self.id}] - ({self.name}) - No images found, skipping it..")
+            return 0
 
         return self.slice_count
 
     # Create test image for GUI
     def create_test_image(self, p):
-
         # Load image
         img = pil_to_cv(pil_open_image(self.filepath))
         img_resized = cv_resize(img, w=900)
@@ -147,7 +160,7 @@ class ScanImageSlicerImage:
                 self.false_slice_count += 1
                 cv_draw_cnt(img_resized, cnt, color_2, 4)
 
-        # Return detected slices and faces
+        # Return detected slices
         img_resized = cv_resize(img_resized, w=min(img_resized.shape[1], p.view_width))
         img_resized = cv_resize(img_resized, h=min(img_resized.shape[0], p.view_height))
 
@@ -155,7 +168,6 @@ class ScanImageSlicerImage:
 
     # Create array for preview images for the GUI
     def create_preview_images(self, p):
-
         # Array for slices
         preview_images = []
 
@@ -169,14 +181,14 @@ class ScanImageSlicerImage:
             if cv_is_cnt_in_range(img_resized, cnt, p.minimum_size, p.maximum_size):
 
                 # Slice the image
-                slice = cv_slice_img(img, img_resized, cnt, p.perspective_fix)
+                sliced_img = cv_slice_img(img, img_resized, cnt, p.perspective_fix)
 
                 # Auto-rotate the slice
                 if p.auto_rotate in ["cw", "ccw"]:
-                    slice = cv_auto_rotate(slice, p.auto_rotate)
+                    sliced_img = cv_auto_rotate(sliced_img, p.auto_rotate)
 
                 # Append slice
-                preview_images.append(slice)
+                preview_images.append(sliced_img)
 
         # Return array of slices
         return preview_images

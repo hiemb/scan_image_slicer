@@ -6,7 +6,7 @@ Short|Long|Input|Explanation
 -h|--help|-|Show help
 -conf|--config-file |PATH|Path to custom config file
 -skip|--skip-confirm|-|Skip the need to confirm action modes
--t|--threads|NUM|Number of worker threads for multiprocessing
+-work|--workers|NUM|Number of workers for multiprocessing
 -name|--project-name|TEXT|Project name
 - Project name is used to create unique path inside output directory (project_name+timestamp).
 - Every slice run creates a new unique directory.
@@ -78,20 +78,20 @@ Short|Long|Input|Range|Explanation
 ### List information:
 Short|Long|Explanation
 :-|:-|:-
--listI|--list-images|List all compatible scanned images
--listF|--list-file|Save list of compatible scanned images as text file
+-listI|--list-images|List all scanned images
+-listF|--list-file|Save list of scanned images as text file
 -listT|--list-tasks|List tasks
-- Created list of compatible images will be saved in the output directory.
+- Created list of images will be saved in the output directory.
 ---
 ### Task handling:
 Short|Long|Input|Explanation
 :-|:-|:-|:-
--addA|--add-all|NUM|Add all compatible images
--addID|--add-id|NUM|Add compatible images by ID
--addN|--add-new|NUM|Add compatible images by modified timestamp (newest)
--addO|--add-old|NUM|Add compatible images by modified timestamp (oldest)
--addR|--add-random|NUM|Add compatible images randomly
--remID|--remove-id|NUM|Remove already added compatible images by ID
+-addA|--add-all|NUM|Add all images
+-addID|--add-id|NUM|Add images by ID
+-addN|--add-new|NUM|Add images by modified timestamp (newest)
+-addO|--add-old|NUM|Add images by modified timestamp (oldest)
+-addR|--add-random|NUM|Add images randomly
+-remID|--remove-id|NUM|Remove already added images by ID
 - Input ID numbers without comma e.g: 1 2 3 4 5
 ---
 ### GUI settings:

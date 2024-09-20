@@ -1,18 +1,18 @@
 Scan-Image-Slicer (SCIS)
 ---
-**Scan-Image-Slicer (SCIS)** is a versatile tool designed for detecting and slicing images from scanned documents or photographs. Whether you're digitizing old photos, processing paper clippings, or working with large batches of images, SCIS offers efficient and customizable solutions to streamline your workflow.
+**Scan-Image-Slicer (SCIS)** is a versatile tool designed for detecting and slicing images from scanned documents or photographs.
 
 ### Modes:
-SCIS offers four distinct modes of operation, each tailored to specific tasks and requirements:
+SCIS offers four distinct modes of operation, each tailored to specific tasks:
 
 #### 1. Count Mode
-- Use this mode to count the slices within images without performing any further processing. Ideal for estimating the space needed for the image slices. Supports multicore processing for faster performance.
+- Use this mode to count the slices within images without performing any further processing. Ideal for estimating the space needed for the image slices.
 
 #### 2. Test Mode
-- Enables a graphical user interface (GUI) for fine-tuning image detection parameters. Useful for adjusting detection sensitivity and minimum/maximum slice size to achieve optimal results.
+- Shows a GUI for fine-tuning image detection parameters. Used for adjusting detection sensitivity and minimum/maximum slice size.
 
 #### 3. Preview Mode
-- Provides a GUI for previewing sliced images and adjusting filtering options. Allows users to customize filters to their preferences before slicing.
+- Shows a GUI for previewing sliced images and adjusting filtering options. Allows users to customize filters to their preferences before slicing.
 
 #### 4. Slice Mode
 - Initiates the slicing process, creating individual images from slices and saving them to the designated output folder. Supports multicore processing  for efficient batch slicing.
@@ -37,7 +37,7 @@ Suggested Workflow
 - Address missing input/output paths as prompted by editing the default config file.
 
 #### 3. Test Mode:
-- Use the test mode to fine-tune image detection. Remember to **save** your detection parameters for optimal results.
+- Use the test mode to fine-tune image detection. Remember to **save** your detection parameters.
 
         scan-image-slicer --test-mode --add-random 5
 
@@ -64,13 +64,13 @@ Examples:
 
         scan-image-slicer --list-images
 
-- Test image detection by counting the slices from the first (ID = 0) image:
+- Test image detection by counting the slices from 5 random images
 
-        scan-image-slicer --count-mode --add-id 0 --white-threshold 235 --minimum-size 5 --maximum-size 40
+        scan-image-slicer --count-mode --add-random 5
 
-- Slice 5 randomly picked scanned images and save the slices in WebP format:
+- Slice 5 randomly picked images and save the slices in WebP format:
 
-        scan-image-slicer --slice-mode --add-random 5 --save-format webp --threads 4
+        scan-image-slicer --slice-mode --add-random 5 --save-format webp
 
 Further info:
 ---

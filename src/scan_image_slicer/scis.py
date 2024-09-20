@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
 import os
-import sys
 import timeit
-import logging as log
-from datetime import datetime
 import random
+import logging
 
+from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from multiprocessing import Value
 from operator import itemgetter
 from tqdm.auto import tqdm
 from time import strftime, localtime, gmtime
@@ -16,14 +14,8 @@ from .gui import show_preview_gui, show_test_gui
 from .scis_image import ScanImageSlicerImage
 from .utils import *
 
-
-# Class for our program parameters
-class Param:
-    pass
-
-
-# Run all action modes with this func
-def run_tasks(p, tasks, images):
+def run_tasks(queue, p, tasks, images):
+    logger = logging.getLogger()
 
     # Create unique run id
     p.run_id = p.project_name + "_{:%Y_%m_%d_%H_%M_%S}".format(datetime.now())
@@ -31,43 +23,20 @@ def run_tasks(p, tasks, images):
     # Create unique run path
     p.unique_path = os.path.join(p.output, p.run_id)
 
-    # Value for results
     result = 0
-
-    # Set initial amount of workers
     workers = 1
 
-    # Create msg for run mode
-    if p.test_mode:
-        run_mode = "testmode"
-    elif p.preview_mode:
-        run_mode = "preview mode"
-    elif p.slice_mode:
-        run_mode = "slice mode"
-    elif p.count_mode:
-        run_mode = "count mode"
-
-    log.info(f"About to start {run_mode} with {len(tasks)} tasks")
-
-    # Skip confirm?
-    if not p.skip_confirm:
-        if not confirm():
-            log.info("Aborting.")
-            sys.exit()
-
-    # Start the timer
     start = timeit.default_timer()
-    print()
-    log.info("%s started @ %s", run_mode.capitalize(), strftime("%a %d %b %Y %H:%M:%S", localtime()))
+    logger.info("%s started @ %s", p.run_mode.capitalize(), strftime("%a %d %b %Y %H:%M:%S", localtime()))
 
     # Enable more workers if needed
     if p.count_mode or p.slice_mode:
-        workers = p.threads
+        workers = p.workers
 
     # Do we need multiprocessing?
     if workers > 1 and len(tasks) > 1:
 
-        log.info(f"Use multiprocessing with {workers} workers")
+        logger.info(f"Use multiprocessing with {workers} workers")
 
         with ProcessPoolExecutor(max_workers=workers) as executor:
 
@@ -79,9 +48,9 @@ def run_tasks(p, tasks, images):
                 for i, task in enumerate(tasks):
 
                     if p.count_mode:
-                        future = executor.submit(images[task].count_slices, p)
+                        future = executor.submit(images[task].count_slices, queue, p)
                     elif p.slice_mode:
-                        future = executor.submit(images[task].save_slices, p)
+                        future = executor.submit(images[task].save_slices, queue, p)
 
                     futures[future] = i
 
@@ -96,47 +65,44 @@ def run_tasks(p, tasks, images):
 
         # Go over tasks one by one
         for task in pbar:
-
             if p.count_mode:
-
-                # Only count the slices
-                result += images[task].count_slices(p)
+                result += images[task].count_slices(queue, p)
 
             if p.test_mode:
+                val, sentinel = show_test_gui(p, images[task])
+                result += val
 
-                # Show test mode GUI
-                result += show_test_gui(p, images[task])
+                if sentinel:
+                    break
 
             elif p.preview_mode:
+                val, sentinel = show_preview_gui(p, images[task])
+                result += val
 
-                # Show preview mode GUI
-                result += show_preview_gui(p, images[task])
+                if sentinel:
+                    break
 
             elif p.slice_mode:
-
-                # Slice and save images
-                result += images[task].save_slices(p)
+                result += images[task].save_slices(queue, p)
 
     # Stop timer and calculate time lapsed
     stop = timeit.default_timer()
     seconds = (stop - start)
     timer_result = strftime("%H hours, %M minutes and %S seconds", gmtime(seconds))
 
-    log.info("%s finished @ %s", run_mode.capitalize(), strftime("%a %d %b %Y %H:%M:%S", localtime()))
-    print()
-    log.info("Time lapsed: %s", timer_result)
+    logger.info("%s finished @ %s", p.run_mode.capitalize(), strftime("%a %d %b %Y %H:%M:%S", localtime()))
+    logger.info("Time lapsed: %s", timer_result)
 
     # Report results
-    if any([p.count_mode, p.test_mode]):
-        log.info(f"Detected {result} images inside {len(tasks)} scanned images")
-    if p.preview_mode:
-        log.info(f"Detected {result} images")
-    if p.slice_mode:
-        log.info(f"Sliced {result} images from {len(tasks)} scanned images")
+    action = "Sliced" if p.slice_mode else "Detected"
+    logger.info(f"{action} {result} images\n")
 
+    if p.slice_mode:
+        logger.info(f"Output: {p.unique_path}\n")
 
 # Parse parameters
 def parse_p(p):
+    logger = logging.getLogger()
     errors = []
 
     # Sanitize value paths
@@ -167,14 +133,14 @@ def parse_p(p):
             errors.append(f"Could not find LUT file at: {p.filter_lut_path}")
 
     # Go over value ranges
-    if not p.white_threshold in range(0, 256):
-        errors.append("Value of '-white/--white-threshold' should be between 0 and 255")
+    if not p.white_threshold in range(1, 256):
+        errors.append("Value of '-white/--white-threshold' should be between 1 and 255")
 
-    if not int(p.minimum_size) in range(0, 101):
-        errors.append("Value of '-min/--minimum-size' should be between 0 and 100")
+    if not int(p.minimum_size) in range(1, 101):
+        errors.append("Value of '-min/--minimum-size' should be between 1 and 100")
 
-    if not int(p.maximum_size) in range(0, 101):
-        errors.append("Value of '-max/--maximum-size' should be between 0 and 100")
+    if not int(p.maximum_size) in range(1, 101):
+        errors.append("Value of '-max/--maximum-size' should be between 1 and 100")
 
     if not p.view_height >= 100:
         errors.append("Value of '-viewH/--view_height' should be at least 100")
@@ -223,32 +189,39 @@ def parse_p(p):
 
     # Abort on errors
     if errors:
-        log.error("Fix the following errors to continue:")
-        for error in errors:
-            log.error(error)
-        sys.exit()
+        logger.info("Fix the following errors to continue:")
+        for err in errors:
+            logger.error(err)
+        p.cont = False
 
     return p
 
-
 # Confirm the function
-def confirm():
+def confirm(skip, task_count, run_mode):
+    logger = logging.getLogger()
+    logger.info(f"Starting {run_mode} with {task_count} tasks")
+
+    if skip:
+        return True
 
     while True:
         try:
-            answer = input(":: Continue y/n: ").lower()
+            logger.info("Continue? y/n")
+            answer = input("").lower()
 
             if answer == 'y':
                 return True
             elif answer == 'n':
+                logger.info("Aborting\n")
                 return False
             else:
                 continue
-        except OSError as e:
-            sys.exit(e)
+        except (OSError, EOFError) as e:
+            logger.error(e)
+            return False
+        except KeyboardInterrupt:
+            return
 
-
-# Function to create the correct amount of dots
 def create_dots(chars):
     cutoff_point = 6
     cutoff_amount = chars - cutoff_point
@@ -257,23 +230,22 @@ def create_dots(chars):
 
     return dots
 
-
-# List compatible images
 def list_images(images):
-
-    log.info("List images:")
+    logger = logging.getLogger()
+    logger.info("List images:")
 
     for key in images.keys():
         line = "[ID:" + str(images[key].id) + "]"
         line += create_dots(len(line)) + images[key].name
         line += " (" + images[key].size_mb + ")"
-        log.info(line)
+        logger.info(line)
 
+    logger.info(f"Images found: {len(images)}\n")
 
-# Save list of compatible scanned images as a txt file inside output directory
+# Save list of images as a txt file inside output directory
 def save_imagelist_as_txt(path, name, images):
-
-    fn = f"{name}_compatible_images.txt"
+    logger = logging.getLogger()
+    fn = f"{name}_images.txt"
     fp = os.path.join(path, fn)
     lines = []
 
@@ -287,17 +259,18 @@ def save_imagelist_as_txt(path, name, images):
         try:
             outfile.writelines(lines)
             outfile.close()
-        except OSError as err:
-            sys.exit(err)
+        except OSError as e:
+            logger.error(e + "\n")
 
     if os.path.exists(fp):
-        log.info("Saved file: %s", fp)
+        logger.info("Saved list of images:")
+        logger.info(fp + "\n")
 
-
-# Add/remove tasks
 def handle_tasks(p, images):
+    logger = logging.getLogger()
     tasks = []
     warns = []
+    info = []
 
     def add_valid_task(task_id):
 
@@ -314,53 +287,54 @@ def handle_tasks(p, images):
         if task_id in tasks:
             tasks.remove(task_id)
         else:
-            warns.append(f"No image in tasks with ID: {task_id}")
+            warns.append(f"No task for image with ID: {task_id}")
 
-    # Add all compatible images
+    # Add all images
     if p.add_all:
 
-        log.info(f"Add all {len(images)} images")
+        info.append(f"Create task for all {len(images)} images")
 
         tasks = list(images.keys())
 
-    # Add compatible images with ID
+    # Add images with ID
     if p.add_id:
 
-        log.info(f"Add images with ID: {p.add_id}")
+        info.append(f"Create task for images with ID: {p.add_id}")
 
         for i in p.add_id:
             add_valid_task(i)
 
-    # Add compatible new images by mtime
+    # Add new images by mtime
     if p.add_new:
 
-        log.info(f"Add {p.add_new} images by mtime (newest)")
+        info.append(f"Create task for {p.add_new} newest images by modification date")
 
         for i in range(p.add_new):
             add_valid_task(i)
 
-    # Add compatible old images by mtime
+    # Add old images by mtime
     if p.add_old:
-        
-        log.info(f"Add {p.add_old} images by mtime (oldest)")
+
+        info.append(f"Create task for {p.add_old} oldest images by modification date")
 
         for i in range(p.add_old):
             add_valid_task((len(images)-1)-i)
 
-    # Add compatible random images
+    # Add random images
     if p.add_random:
 
         pool = list(images.keys())
         picks = []
 
         for i in range(p.add_random):
-            pick = random.choice(pool)
+            if pool:
+                pick = random.choice(pool)
 
-            if not pick in picks:
-                picks.append(pick)
-                pool.remove(pick)
-    
-        log.info(f"Add random images with ID: {picks}")
+                if not pick in picks:
+                    picks.append(pick)
+                    pool.remove(pick)
+
+        info.append(f"Create task for random images with ID: {picks}")
 
         for pick in picks:
             add_valid_task(pick)
@@ -368,22 +342,26 @@ def handle_tasks(p, images):
     # Remove tasks by ID
     if p.remove_id:
 
-        log.info(f"Remove images with ID: {p.remove_id}")
+        info.append(f"Remove task for image with ID: {p.remove_id}")
 
         for i in p.remove_id:
             remove_valid_task(i)
 
-    # Show warnings
+    if info:
+        for i in info:
+            logger.info(i)
+
     if warns:
         for warn in warns:
-            log.warn(warn)
+            logger.warning(warn)
+
+    logger.info(f"Tasks added: {len(tasks)}\n")
 
     return tasks
 
-
 def list_tasks(tasks, images):
-
-    log.info("List tasks:")
+    logger = logging.getLogger()
+    logger.info("List tasks:")
 
     if tasks:
         for task in tasks:
@@ -391,14 +369,14 @@ def list_tasks(tasks, images):
             line = "[ID:" + str(image.id) + "]"
             line += create_dots(len(line)) + image.name
             line += " (" + image.size_mb + ")"
-            log.info(line)
+            logger.info(line)
+
+        logger.info(f"Total: {len(tasks)}\n")
     else:
-        log.info("Tasklist is empty")
+        logger.info("Tasklist is empty\n")
 
-
-# Rename output temp files
 def sequential_parallel_rename(p):
-
+    logger = logging.getLogger()
     output_images = []
     counter = 0
     cur_path = ""
@@ -455,28 +433,22 @@ def sequential_parallel_rename(p):
                     output_images.append(image)
 
     # Do we need multiprocessing?
-    if p.threads > 1 and len(output_images) > 1:
-        log.info("Rename output files sequentially")
-
-        with ProcessPoolExecutor(max_workers=p.threads) as executor:
+    if p.workers > 1 and len(output_images) > 1:
+        with ProcessPoolExecutor(max_workers=p.workers) as executor:
 
             # Split our output images for the executor
             for i, output_image in enumerate(output_images):
                 executor.submit(os.rename, output_image[0], output_image[1])
-                log.debug(f"Rename {output_image[0]} to {output_image[1]}")
+                logger.debug(f"Rename {output_image[0]} to {output_image[1]}")
                 result += i
-
-    # Go over our output images and rename them sequentially
     else:
-        log.info("Rename output files sequentially")
-
         for output_image in output_images:
             os.rename(output_image[0], output_image[1])
-            log.debug(f"Rename {output_image[0]} to {output_image[1]}")
+            logger.debug(f"Rename {output_image[0]} to {output_image[1]}")
 
-
-# Collect compatible images from input directory
+# Collect images from input directory
 def collect_images(input):
+
     id = 0
     sorted_images = {}
     scanned_images = []
@@ -491,7 +463,7 @@ def collect_images(input):
                 ".tiff",
             ]
 
-    # Walk through the input folder and collect compatible images
+    # Walk through the input folder and collect images
     for path, dirs, files in os.walk(os.path.normpath(input)):
 
         # Go through files one by one
@@ -539,6 +511,3 @@ def collect_images(input):
 
         # Return our sorted images as a dictionary
         return sorted_images
-    else:
-        log.error(f"Could not find any compatible images at {input}")
-        sys.exit()

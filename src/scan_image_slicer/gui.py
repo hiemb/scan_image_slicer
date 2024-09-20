@@ -1,32 +1,32 @@
 #!/usr/bin/env python3
 
 import os
-import sys
 import timeit
-import logging as log
+import logging
 import FreeSimpleGUI as sg
 
 from PIL import Image
 from .utils import *
 from .gui_widgets import *
 
-
 # Popup info message
 def popup_msg(msg):
     sg.popup(f"{msg}", auto_close=True, auto_close_duration=3, no_titlebar=True)
 
-
 # Show preview of sliced image
 def show_preview_gui(p, scis_img):
-
-    # Setup GUI
+    logger = logging.getLogger()
     sg.theme(p.theme)
     window_title = "Scan-Image-Slicer - Preview mode"
     layout = []
     widgets = []
     preview_images = scis_img.create_preview_images(p)
     image_count = len(preview_images)
+    sentinel = False
     image_index = 0
+    filter_time = 0
+    unapplied_filters = []
+
     applied_filters = [
         p.filter_color,
         p.filter_contrast,
@@ -36,8 +36,11 @@ def show_preview_gui(p, scis_img):
         p.filter_lut_strength,
         p.filter_lut_path
     ]
-    unapplied_filters = []
-    filter_time = 0
+
+    # Output warning if no images found and skip the file
+    if not preview_images:
+        logger.warning(f"[ID:{scis_img.id}] - ({scis_img.name}) - No images found, skipping it..")
+        return 0, sentinel
 
     # Create menu strings
     def str_slice_size():
@@ -45,7 +48,6 @@ def show_preview_gui(p, scis_img):
         return f"Size: {img.shape[0]}x{img.shape[1]} px"
 
     def str_slice_n():
-        img = preview_images[image_index]
         return f"Slice {image_index+1} of {image_count}"
 
     def str_filter_time():
@@ -108,9 +110,9 @@ def show_preview_gui(p, scis_img):
 
         # Abort run
         if event in [sg.WIN_CLOSED, "Abort"]:
-            log.info("Aborting")
-            window.close()
-            sys.exit()
+            logger.info("Aborting")
+            sentinel = True
+            break
 
         # Next image
         if event == "Next image":
@@ -250,18 +252,17 @@ def show_preview_gui(p, scis_img):
             window["filter_time"].update(str_filter_time(), visible=True)
 
     window.close()
-    return image_count
-
+    return image_count, sentinel
 
 # Show test image inside GUI
 def show_test_gui(p, scis_img):
-
-    # Setup GUI
+    logger = logging.getLogger()
     sg.theme(p.theme)
     window_title = "Scan-Image-Slicer - Test mode"
     layout = []
     widgets = []
     test_image = scis_img.create_test_image(p)
+    sentinel = False
 
     # Create info strings
     def update_detection_count_txt(count):
@@ -289,21 +290,21 @@ def show_test_gui(p, scis_img):
     widgets.append([Button(p, "Save image"), Button(p, "Open image")])
     widgets.append([Button(p, "Abort"), Button(p, "Next image")])
 
-    # Create layout for GUI window
+    # Create layout for window
     layout.append([Image(pil_to_buffer(test_image), key="test_image"), Column(widgets)])
 
-    # Create the GUI window
+    # Create window
     window = Window(window_title, layout)
 
     # Run the GUI
     while True:
         event, values = window.read()
 
-        # Abort run.
+        # Abort run
         if event in [sg.WIN_CLOSED, "Abort"]:
-            log.info("Aborting")
-            window.close()
-            sys.exit()
+            logger.info("Aborting")
+            sentinel = True
+            break
 
         # Load next image
         if event == "Next image":
@@ -319,12 +320,12 @@ def show_test_gui(p, scis_img):
             # Get file path where to save image
             filepath = sg.popup_get_file("Save image", default_path=os.path.join(p.output, scis_img.name), save_as=True)
 
-            # Try to save the file.
+            # Try to save the file
             if filepath:
                 test_image.save(filepath)
                 popup_msg(f"Saved image to:\n {filepath}")
 
-        # Save values.
+        # Save values
         if event == "Save values":
             yaml_change_value(p.path_config_file, "white-threshold", int(values["white_threshold"]))
             yaml_change_value(p.path_config_file, "minimum-size", values["minimum_size"])
@@ -346,6 +347,5 @@ def show_test_gui(p, scis_img):
             window["slice_count"].update(update_detection_count_txt(scis_img.slice_count))
             window["false_slice_count"].update(update_ignored_count_txt(scis_img.false_slice_count))
 
-    # Close the window and return the slice counter
     window.close()
-    return scis_img.slice_count
+    return scis_img.slice_count, sentinel

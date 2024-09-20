@@ -1,46 +1,22 @@
 #!/usr/bin/env python3
 
 import os
-import sys
-import logging as log
+import logging
 import configargparse
 from .__init__ import __doc__
 from .__version__ import __version__
 from .config import config_raw
-from .scis import Param
 from .utils import create_statusline
 
-
-def conf_parser_p():
-
-    # Create param class
-    p = Param()
-
-    # Load the version from file
+def conf_parser_p(p):
+    logger = logging.getLogger()
+    p.cont = True
     p.version = __version__
-
-    # App name
     p.name = "Scan-Image-Slicer"
-
-    # Description
     p.description = __doc__
 
-    # Create path for config file based on platform
-    if sys.platform in ["win32", "cygwin"]:
-        p.path_config_dir = os.path.join(os.path.expanduser("~"), "Documents", "ScanImageSlicer")
-    elif sys.platform == "darwin":
-        p.path_config_dir = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "ScanImageSlicer")
-    elif sys.platform == "linux":
-        p.path_config_dir = os.path.join(os.path.expanduser("~"), ".config", "ScanImageSlicer")
-    else:
-        p.path_config_dir = os.path.join(os.path.expanduser("~"), ".ScanImageSlicer")
-
-    # Create the default config file directory if needed
-    if not os.path.exists(p.path_config_dir):
-        os.mkdir(p.path_config_dir)
-
     # Create the default config file if it does not exist
-    p.name_config_file = "config.yaml"
+    p.name_config_file = "v" + __version__.replace(".", "") + "_config.yaml"
     p.path_config_file = os.path.join(p.path_config_dir, p.name_config_file)
 
     if not os.path.isfile(p.path_config_file):
@@ -49,16 +25,20 @@ def conf_parser_p():
                 outfile.writelines(config_raw)
                 outfile.close()
             except OSError as e:
-                sys.exit(e)
+                logger.error(e)
+                p.cont = False
 
         # Notify the user about default config file being created
         if os.path.isfile(p.path_config_file):
-            print()
-            log.info("Created default config file: %s", p.path_config_file)
+            logger.info("Created default config file:")
+            logger.info(p.path_config_file + "\n")
         else:
             # Exit if unable to create config file
-            log.error("Could not create default config file: ", p.path_config_file)
-            sys.exit()
+            logger.error(f"Could not create default config file: {p.path_config_file}")
+            p.cont = False
+
+    if not p.cont:
+        return p
 
     # Setup confargparser
     description = create_statusline(p.name, p.version, p.description, p.path_config_file)
@@ -68,11 +48,13 @@ def conf_parser_p():
         description=description,
         config_file_parser_class=configargparse.YAMLConfigFileParser,
         formatter_class=configargparse.RawTextHelpFormatter,
-        allow_abbrev=True)
+        exit_on_error=False,
+        allow_abbrev=True
+    )
 
     parser.add_argument("-conf", "--config-file", metavar="FILE", is_config_file=True, help="Path to custom config file")
     parser.add_argument("-skip", "--skip-confirm", action="store_true", help="Skip the need to confirm action modes")
-    parser.add_argument("-t", "--threads", metavar="NUM", type=int, help="Number of worker threads for multiprocessing")
+    parser.add_argument("-work", "--workers", metavar="NUM", type=int, help="Number of workers for multiprocessing")
     parser.add_argument("-name", "--project-name", metavar="TEXT", type=str, help="Project name")
 
     mode_group = parser.add_argument_group("Modes")
@@ -88,9 +70,9 @@ def conf_parser_p():
     path_group.add_argument("-lutP", "--filter-lut-path", metavar="FILE", type=str, help="Path to lut .cube file")
 
     detect_group = parser.add_argument_group("Image slice detection")
-    detect_group.add_argument("-white", "--white-threshold", metavar="NUM", type=int, help="White level between slices (0-255)")
-    detect_group.add_argument("-min", "--minimum-size", metavar="NUM", type=float, help="Minimum slice size in %% (0-100)")
-    detect_group.add_argument("-max", "--maximum-size", metavar="NUM", type=float, help="Maximum slice size in %% (0-100)")
+    detect_group.add_argument("-white", "--white-threshold", metavar="NUM", type=int, help="White level between slices (1-255)")
+    detect_group.add_argument("-min", "--minimum-size", metavar="NUM", type=float, help="Minimum slice size in %% (1-100)")
+    detect_group.add_argument("-max", "--maximum-size", metavar="NUM", type=float, help="Maximum slice size in %% (1-100)")
 
     scale_group = parser.add_argument_group("Image slice scaling")
     scale_group.add_argument("-scaleF", "--scale-factor", metavar="NUM", type=float, help="Scale slice with factor value")
@@ -138,10 +120,38 @@ def conf_parser_p():
     gui_group.add_argument("-viewW", "--view-width", metavar="NUM", type=int, help="Max image width inside GUI")
     gui_group.add_argument("-viewH", "--view-height", metavar="NUM", type=int, help="Max image height inside GUI")
 
-    parser.parse_args(namespace=p)
+    unknown = None
+
+    try:
+        args, unknown = parser.parse_known_args(namespace=p)
+    except configargparse.ArgumentError as e:
+        logger.error(e)
+        logger.info("Use -h or --help to view command-line arguments\n")
+        p.cont = False
+    except SystemExit:
+        p.cont = False
+
+    # Handle typos in arguments
+    if unknown:
+        for arg in unknown:
+            logger.error(f"Unknown argument: {arg}")
+
+        p.cont = False
+        logger.info("Use -h or --help to view command-line arguments\n")
 
     # Handle custom config file
     if p.config_file:
         p.path_config_file = p.config_file
+
+    if p.test_mode:
+        p.run_mode = "test mode"
+    elif p.preview_mode:
+        p.run_mode = "preview mode"
+    elif p.slice_mode:
+        p.run_mode = "slice mode"
+    elif p.count_mode:
+        p.run_mode = "count mode"
+    else:
+        p.run_mode = ""
 
     return p

@@ -21,22 +21,22 @@ input: "/path/to/input/"
 # Your slices will be placed here under unique directory
 output: "/path/to/output/"
 
-# Number of Worker threads for multiprocessing
+# Number of workers used for multiprocessing
 # Use half of physical cpu cores as a safe default value
-threads: 2
+workers: 2
 
 # Skip the need to confirm action modes (True/False)
 skip-confirm: False
 
-# Detection sensitivity (0-255)
+# Detection sensitivity (1-255)
 # Try to match this with the color between scanned items (in grayscale)
 white-threshold: 230
 
-# Minimum size of the sliced image in % compared to scanned image (0-100)
+# Minimum size of the sliced image in % compared to scanned image (1-100)
 minimum-size: 1.00
 
-# Maximum size of the sliced image in % compared to scanned image (0-100)
-maximum-size: 40.00
+# Maximum size of the sliced image in % compared to scanned image (1-100)
+maximum-size: 45.00
 
 # Enable count mode (True/False)
 count-mode: False
