@@ -7,7 +7,7 @@ name = "scan-image-slicer"
 authors = [{name = "hiemb", email = "highonember@gmail.com"}]
 readme = "README.md"
 license = {file = "LICENSE"}
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 keywords = ["scanner", "scan", "slice", "slicer", "image", "photo", "digitize"]
 dynamic = ["version", "description"]
 dependencies = [
